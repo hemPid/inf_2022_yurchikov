@@ -2,6 +2,9 @@ import pygame
 from pygame.draw import *
 from random import randint
 from math import *
+import pygame_textinput
+import os.path
+
 pygame.init()
 
 FPS = 30
@@ -9,6 +12,8 @@ screen_width = 1200
 screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
 level = 1
+points = 0
+player = 1
 
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
@@ -59,8 +64,8 @@ def new_ball():
     r = randint(10, 100)
     x = randint(r, screen_width - r)
     y = randint(r, screen_height - r)
-    vel_x = randint(-10*level, 10*level)
-    vel_y = randint(-10*level, 10*level)
+    vel_x = randint(-10, 10)*level
+    vel_y = randint(-10, 10)*level
     color = COLORS[randint(0, 5)]
     balls.append([x,y,r, color, vel_x, vel_y])
     circle(screen, color, (x, y), r)
@@ -72,19 +77,19 @@ def change_balls_position():
 	for b in balls:
 		#меняем положение по Ox
 		if b[0] + (b[4]/FPS) > screen_width - b[2]:
-			b[4] = randint(-10*level, 0) #отражение от правой границы
+			b[4] = randint(-10, 0)*level #отражение от правой границы
 			b[0] += (b[4]/FPS)
 		elif b[0] + (b[4]/FPS) < b[2]:
-			b[4] = randint(0, 10*level) #отражение от левой границы
+			b[4] = randint(0, 10)*level #отражение от левой границы
 			b[0] += (b[4]/FPS)
 		else:
 			b[0] += (b[4]/FPS) #движение по Ox без столкновений
 		#меняем положение по Oy
 		if b[1] + (b[5]/FPS) > screen_height - b[2]:
-			b[5] = randint(-10*level,0) #отражение от нижней границы
+			b[5] = randint(-10,0)*level #отражение от нижней границы
 			b[1] += (b[5]/FPS)
 		elif b[1] + (b[5]/FPS) < b[2]:
-			b[5] = randint(0, 10*level) #отражение от верхней границы
+			b[5] = randint(0, 10)*level #отражение от верхней границы
 			b[1] += (b[5]/FPS)
 		else:
 			b[1] += (b[5]/FPS) #движение по Oy
@@ -108,24 +113,87 @@ def is_mouse_in_position(ev, t, pos):
 			return True
 	return False
 
+def gameover():
+	'''Показывает экран с количеством очков и вводом имени, возвращает inputbox'''
+	f1 = pygame.font.SysFont('arial', 80, True)
+	text1 = f1.render(str('GAME OVER'), True, WHITE)
+	screen.blit(text1, (screen_width/2 - 450, 100))
+	text2 = f1.render(str('Your score: ' + str(points)), True, WHITE)
+	screen.blit(text2, (screen_width/2 - 450, 200))
+	f2 = pygame.font.SysFont('arial', 40, True)
+	text3 = f2.render(str('Enter your name and press enter (20 сhars max):'), True, WHITE)
+	screen.blit(text3, (screen_width/2 - 450, 300))
+	manager = pygame_textinput.TextInputManager(validator = lambda input: len(input) <= 20)
+	tmp = pygame_textinput.TextInputVisualizer(manager=manager)
+	tmp.font_color = (255,255,255)
+	return tmp
+
+def write_record(name, score):
+	'''
+	делает запись в файл с количеством очков и именем игрока
+	name - имя игрока
+	score - его очки
+	'''
+	output = list()
+	if not os.path.exists('players.txt'): #создаём рейтинговый файл, если он отсутствует
+		with open('players.txt', 'w') as f:
+			f.write(name + ' ' + score + '\n')
+		return None
+	with open('players.txt', 'r') as f:
+		st = f.readlines()
+		if len(st) == 0:
+			data.append(name + ' ' + score + '\n')
+		else:
+			data = list(map(lambda x: x.rstrip().split(), st))
+			found = False
+			#Добавляем запись с игроком в рейтинг
+			for person in data:
+				if person[0] == name:
+					found = True
+					if int(person[1]) < int(score):
+						data.remove(person)
+						data.append([name, score])
+					break
+			if not found:
+				data.append([name, score])
+			data = sorted(data, key = lambda x: -int(x[1]))
+			output = ''.join(list(map(lambda x: ' '.join(x) + '\n', data)))
+	with open('players.txt', 'w') as f:
+		f.write(output)
+
 
 
 pygame.display.update()
 clock = pygame.time.Clock()
 finished = False
 level_started = False
+lost = False
+textinput = None
 i = 0
 init_game()
 while not finished:
     clock.tick(FPS)
     if level_started:
     	screen.fill(BLACK)
-    	if i == 60:
-    		new_ball()
+    	if i == floor(600/level):
+    		if len(balls) < 5:
+    			new_ball()
+    		else:
+    			#засчитано поражение создаётся окно ввода имени
+    			level_started = False
+    			lost = True
+    			screen.fill(BLACK)
+    			textinput = gameover()
     		i = 0
-    	change_balls_position()
+    	if not lost:
+    		change_balls_position()
     	i+=1
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    if lost:
+    	rect(screen, BLACK, (screen_width/2 - 450, 400, 500, 500))
+    	screen.blit(textinput.surface, (screen_width/2 - 450, 400))
+    	textinput.update(events)
+    for event in events:
         if event.type == pygame.QUIT:
             finished = True
         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -139,6 +207,23 @@ while not finished:
             		level = 10 * (2 ** (l-1))
             		print(level)
             		level_started = True
+            		buttons.clear()
+            if level_started:
+            	for b in balls:
+            		if is_mouse_in_position(event, 2, (b[0], b[1], b[2])):
+            			balls.remove(b)
+            			points += 1
+            			break
+        elif event.type == pygame.KEYDOWN and lost:
+        	if event.key == pygame.K_RETURN:
+        		#Обнуляем очки, делаем запись в файл
+        		lost = False
+        		balls.clear()
+        		screen.fill(BLACK)
+        		write_record(textinput.value, str(points))
+        		points = 0
+        		init_game()
+
 
     pygame.display.update()
 
