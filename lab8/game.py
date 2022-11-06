@@ -87,6 +87,24 @@ def change_balls_position():
 		circle(screen, b[3], (b[0], b[1]), b[2])
 	pygame.display.update()
 
+def is_mouse_in_position(ev, t, pos):
+	'''
+	Возвращает True, если мышь находится в заданной области
+	ev - событие мыши
+	t - тип области (1 - Прямоугольник, 2 - окружность)
+	pos - координаты области (При t = 1, (x,y,w,h), при t = 2 (x, y, r))
+	'''
+	m_x = ev.pos[0]
+	m_y = ev.pos[1]
+	if t == 1:
+		if pos[0] <= m_x and m_x <= pos[0] + pos[2] and pos[1] <= m_y and m_y <= pos[1] + pos[3]:
+			return True
+	if t == 2:
+		if (m_x - pos[0]) ** 2 + (m_y - pos[1]) ** 2 <= pos[2] ** 2:
+			return True
+	return False
+
+
 
 pygame.display.update()
 clock = pygame.time.Clock()
@@ -95,13 +113,22 @@ level_started = False
 init_game()
 while not finished:
     clock.tick(FPS)
-    #screen.fill(BLACK)
+    if level_started:
+    	screen.fill(BLACK)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if not level_started:
-            	print('click')
+            	l = 0
+            	for b in buttons:
+            		if is_mouse_in_position(event, 1, b[1]):
+            			l = b[0]
+            			break
+            	if l:
+            		level = l
+            		print(level)
+
     pygame.display.update()
 
 pygame.quit()
