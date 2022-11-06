@@ -59,8 +59,8 @@ def new_ball():
     r = randint(10, 100)
     x = randint(r, screen_width - r)
     y = randint(r, screen_height - r)
-    vel_x = randint(-90, 90)
-    vel_y = randint(-90, 90)
+    vel_x = randint(-10*level, 10*level)
+    vel_y = randint(-10*level, 10*level)
     color = COLORS[randint(0, 5)]
     balls.append([x,y,r, color, vel_x, vel_y])
     circle(screen, color, (x, y), r)
@@ -71,19 +71,23 @@ def change_balls_position():
     
 	for b in balls:
 		#меняем положение по Ox
-		if b[0] + (b[4]/FPS) > 1200 - b[2]:
-			b[0] = 1200 - b[2]
-		elif b[0] + (b[4]/FPS) < b[2]:
-			b[0] = b[2]
-		else:
+		if b[0] + (b[4]/FPS) > screen_width - b[2]:
+			b[4] = randint(-10*level, 0) #отражение от правой границы
 			b[0] += (b[4]/FPS)
-		#меняем положение по Oy
-		if b[1] + (b[5]/FPS) > 800 - b[2]:
-			b[1] = 900 - b[2]
-		elif b[1] + (b[5]/FPS) < b[2]:
-			b[1] = b[2]
+		elif b[0] + (b[4]/FPS) < b[2]:
+			b[4] = randint(0, 10*level) #отражение от левой границы
+			b[0] += (b[4]/FPS)
 		else:
+			b[0] += (b[4]/FPS) #движение по Ox без столкновений
+		#меняем положение по Oy
+		if b[1] + (b[5]/FPS) > screen_height - b[2]:
+			b[5] = randint(-10*level,0) #отражение от нижней границы
 			b[1] += (b[5]/FPS)
+		elif b[1] + (b[5]/FPS) < b[2]:
+			b[5] = randint(0, 10*level) #отражение от верхней границы
+			b[1] += (b[5]/FPS)
+		else:
+			b[1] += (b[5]/FPS) #движение по Oy
 		circle(screen, b[3], (b[0], b[1]), b[2])
 	pygame.display.update()
 
@@ -110,11 +114,17 @@ pygame.display.update()
 clock = pygame.time.Clock()
 finished = False
 level_started = False
+i = 0
 init_game()
 while not finished:
     clock.tick(FPS)
     if level_started:
     	screen.fill(BLACK)
+    	if i == 60:
+    		new_ball()
+    		i = 0
+    	change_balls_position()
+    	i+=1
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
@@ -126,8 +136,9 @@ while not finished:
             			l = b[0]
             			break
             	if l:
-            		level = l
+            		level = 10 * (2 ** (l-1))
             		print(level)
+            		level_started = True
 
     pygame.display.update()
 
