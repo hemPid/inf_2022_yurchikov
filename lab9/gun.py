@@ -18,6 +18,7 @@ BLACK = (0, 0, 0)
 WHITE = 0xFFFFFF
 GREY = 0x7D7D7D
 GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
+ACCELERATION = np.array([0,200])
 
 WIDTH = 800
 HEIGHT = 600
@@ -38,7 +39,7 @@ class Ball:
         self.color = choice(GAME_COLORS)
         self.live = 30
 
-    def move(self):
+    def move(self, dt):
         """Переместить мяч по прошествии единицы времени.
 
         Метод описывает перемещение мяча за один кадр перерисовки. То есть, обновляет значения
@@ -46,7 +47,8 @@ class Ball:
         и стен по краям окна (размер окна 800х600).
         """
         # FIXME
-        self.pos += self.vel
+        self.vel += dt*ACCELERATION
+        self.pos += dt*self.vel
 
     def draw(self):
         pygame.draw.circle(
@@ -64,8 +66,8 @@ class Ball:
         Returns:
             Возвращает True в случае столкновения мяча и цели. В противном случае возвращает False.
         """
-        # FIXME
-        return False
+        s = self.pos - obj.pos
+        return np.linalg.norm(s) <= self.r + obj.r
 
 
 class Gun:
@@ -100,7 +102,7 @@ class Gun:
         new_ball = Ball(self.screen)
         new_ball.r += 5
         self.an = math.atan2((event.pos[1]-new_ball.pos[1]), (event.pos[0]-new_ball.pos[0]))
-        new_ball.vel = np.array([self.f2_power * math.cos(self.an), self.f2_power * math.sin(self.an)])
+        new_ball.vel = 10 * np.array([self.f2_power * math.cos(self.an), self.f2_power * math.sin(self.an)])
         balls.append(new_ball)
         self.f2_on = 0
         self.f2_power = 10
@@ -135,7 +137,6 @@ class Gun:
 class Target:
     def __init__(self, screen):
         self.points = 0
-        self.live = 1
         self.screen = screen
         self.new_target()
     
@@ -172,7 +173,7 @@ while not finished:
         b.draw()
     pygame.display.update()
 
-    clock.tick(FPS)
+    dt = clock.tick(FPS)/1000
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
@@ -184,9 +185,8 @@ while not finished:
             gun.targetting(event)
 
     for b in balls:
-        b.move()
-        if b.hittest(target) and target.live:
-            target.live = 0
+        b.move(dt)
+        if b.hittest(target):
             target.hit()
             target.new_target()
     gun.power_up()
