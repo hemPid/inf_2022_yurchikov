@@ -1,5 +1,7 @@
 import math
+from random import randint
 from random import choice
+import numpy as np
 
 import pygame
 
@@ -30,11 +32,9 @@ class Ball:
         y - начальное положение мяча по вертикали
         """
         self.screen = screen
-        self.x = x
-        self.y = y
+        self.pos = np.array([x, y],  dtype=np.float64)
         self.r = 10
-        self.vx = 0
-        self.vy = 0
+        self.vel = np.array([0, 0])
         self.color = choice(GAME_COLORS)
         self.live = 30
 
@@ -46,14 +46,13 @@ class Ball:
         и стен по краям окна (размер окна 800х600).
         """
         # FIXME
-        self.x += self.vx
-        self.y -= self.vy
+        self.pos += self.vel
 
     def draw(self):
         pygame.draw.circle(
             self.screen,
             self.color,
-            (self.x, self.y),
+            self.pos,
             self.r
         )
 
@@ -66,16 +65,27 @@ class Ball:
             Возвращает True в случае столкновения мяча и цели. В противном случае возвращает False.
         """
         # FIXME
-            return False
+        return False
 
 
 class Gun:
-    def __init__(self, screen):
+    def __init__(self, screen, x=20, y=450, width=50, height=10):
+        """Создаёт пушку Gun
+
+        Args:
+        x - положение оси вращения по оси Ox
+        y - положение оси вращения по оси Oy
+        width - ширина пушки
+        height - высота пушки
+        """
         self.screen = screen
         self.f2_power = 10
         self.f2_on = 0
         self.an = 1
         self.color = GREY
+        self.axis = np.array([x,y])
+        self.width = width
+        self.height = height
 
     def fire2_start(self, event):
         self.f2_on = 1
@@ -87,12 +97,10 @@ class Gun:
         Начальные значения компонент скорости мяча vx и vy зависят от положения мыши.
         """
         global balls, bullet
-        bullet += 1
         new_ball = Ball(self.screen)
         new_ball.r += 5
-        self.an = math.atan2((event.pos[1]-new_ball.y), (event.pos[0]-new_ball.x))
-        new_ball.vx = self.f2_power * math.cos(self.an)
-        new_ball.vy = - self.f2_power * math.sin(self.an)
+        self.an = math.atan2((event.pos[1]-new_ball.pos[1]), (event.pos[0]-new_ball.pos[0]))
+        new_ball.vel = np.array([self.f2_power * math.cos(self.an), self.f2_power * math.sin(self.an)])
         balls.append(new_ball)
         self.f2_on = 0
         self.f2_power = 10
@@ -107,36 +115,43 @@ class Gun:
             self.color = GREY
 
     def draw(self):
-        # FIXIT don't know how to do it
+        a1 = np.array([(self.height/2)*math.cos(self.an - (math.pi/2)), (self.height/2)*math.sin(self.an - (math.pi/2))])
+        a4 = np.array([(self.height/2)*math.cos(self.an + (math.pi/2)), (self.height/2)*math.sin(self.an + (math.pi/2))])
+        a2 = a1 + np.array([(self.width/2)*math.cos(self.an), (self.width/2)*math.sin(self.an)])
+        a3 = a4 + np.array([(self.width/2)*math.cos(self.an), (self.width/2)*math.sin(self.an)])
+        pygame.draw.polygon(self.screen, self.color, [self.axis + a1, self.axis + a2, self.axis + a3, self.axis + a4])
 
     def power_up(self):
         if self.f2_on:
             if self.f2_power < 100:
-                self.f2_power += 1
+                self.f2_power += 2
+                self.width = 50 * (1 + (self.f2_power-10)/90)
             self.color = RED
         else:
             self.color = GREY
+            self.width = 50
 
 
 class Target:
-    # self.points = 0
-    # self.live = 1
-    # FIXME: don't work!!! How to call this functions when object is created?
-    # self.new_target()
+    def __init__(self, screen):
+        self.points = 0
+        self.live = 1
+        self.screen = screen
+        self.new_target()
+    
 
     def new_target(self):
         """ Инициализация новой цели. """
-        x = self.x = rnd(600, 780)
-        y = self.y = rnd(300, 550)
-        r = self.r = rnd(2, 50)
-        color = self.color = RED
+        self.pos = np.array([randint(600, 780), randint(300, 550)])
+        self.r = randint(2, 50)
+        self.color = RED
 
     def hit(self, points=1):
         """Попадание шарика в цель."""
         self.points += points
 
     def draw(self):
-        ...
+        pygame.draw.circle(self.screen, self.color, self.pos, self.r)
 
 
 pygame.init()
@@ -146,7 +161,7 @@ balls = []
 
 clock = pygame.time.Clock()
 gun = Gun(screen)
-target = Target()
+target = Target(screen)
 finished = False
 
 while not finished:
