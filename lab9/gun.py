@@ -180,13 +180,16 @@ class Target:
     def draw(self):
         pygame.draw.circle(self.screen, self.color, self.pos, self.r)
 
-def show_points(screen, targets):
+
+def show_points(screen, points):
     """Отобрадает число очков на экране
     Args:
     screen - экран, на котором отображается число очков
-    targets - список целей
+    points - число очков
     """
-    pass
+    f1 = pygame.font.SysFont('arial', 40, True)
+    text = f1.render(str(points), True, BLACK)
+    screen.blit(text, (WIDTH - 10 - 26*len(str(points)), 10))
 
 
 pygame.init()
@@ -202,6 +205,7 @@ finished = False
 while not finished:
     screen.fill(WHITE)
     gun.draw()
+    show_points(screen, points)
     for t in targets:
         t.draw()
     for b in balls:
