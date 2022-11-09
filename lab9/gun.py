@@ -164,18 +164,49 @@ class Gun:
 
 class Target:
     def __init__(self, screen):
+        """Создаёт цели 3-х типов:
+        1 тип: большой и не двигается
+        2 тип: средний и дивгается по одной из осей
+        3 тип: малый и двигается по обоим осям"""
         self.screen = screen
-        self.pos = np.array([randint(600, 750), randint(300, 550)])
-        self.r = randint(2, 50)
-        self.color = RED
+        self.pos = np.array([randint(600, 750), randint(300, 550)],
+                            dtype=np.float64)
+        self.target_type = randint(1, 3)
+        if self.target_type == 1:
+            self.r = randint(30, 50)
+            self.vel = np.array([0, 0])
+            self.color = RED
+        elif self.target_type == 2:
+            self.r = randint(15, 30)
+            axis1 = randint(0, 1)
+            self.vel = np.array([(1-axis1)*randint(1, 30),
+                                 axis1*randint(1, 30)])
+            self.color = YELLOW
+        else:
+            self.r = randint(1, 15)
+            self.vel = np.array([randint(1, 60), randint(1, 60)])
+            self.color = GREEN
 
-    def hit(self, p=1):
-        """Попадание шарика в цель.
-        Args:
-        p - число добавляемых очков
-        """
+    def move(self, dt):
+        """ Переместить цель по прошествии единицы времени. """
+        self.pos += dt*self.vel
+        if self.pos[0] + self.r >= WIDTH or self.pos[0] <= 600:
+            self.vel[0] = -1*self.vel[0]
+            if self.pos[0] + self.r >= WIDTH:
+                self.pos[0] = WIDTH - self.r - 1
+            else:
+                self.pos[0] = 601
+        if self.pos[1] <= 300 or self.pos[1] + self.r >= HEIGHT:
+            self.vel[1] = -1*self.vel[1]
+            if self.pos[1] + self.r >= HEIGHT:
+                self.pos[1] = HEIGHT - self.r - 1
+            else:
+                self.pos[1] = 301
+
+    def hit(self):
+        """ Попадание шарика в цель. """
         global points
-        points += p
+        points += self.target_type
 
     def draw(self):
         pygame.draw.circle(self.screen, self.color, self.pos, self.r)
@@ -227,7 +258,8 @@ while not finished:
             gun.fire2_end(event)
         elif event.type == pygame.MOUSEMOTION:
             gun.targetting(event)
-
+    for t in targets:
+        t.move(dt)
     for b in balls:
         b.move(dt)
         for t in targets:
