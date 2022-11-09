@@ -37,7 +37,7 @@ class Ball:
         self.r = 10
         self.vel = np.array([0, 0])
         self.color = choice(GAME_COLORS)
-        self.live = 30
+        self.live_time = 4000
 
     def move(self, dt):
         """Переместить мяч по прошествии единицы времени.
@@ -51,6 +51,7 @@ class Ball:
         # FIXME
         self.vel += dt*ACCELERATION
         self.pos += dt*self.vel
+        self.live_time -= dt*1000
         if self.pos[0] + self.r >= WIDTH or self.pos[0] - self.r <= 0:
             self.vel[0] = -0.5*self.vel[0]
             if self.pos[0] + self.r >= WIDTH:
@@ -196,7 +197,10 @@ while not finished:
     gun.draw()
     target.draw()
     for b in balls:
-        b.draw()
+        if b.live_time < 0:
+            balls.remove(b)
+        else:
+            b.draw()
     pygame.display.update()
 
     dt = clock.tick(FPS)/1000
