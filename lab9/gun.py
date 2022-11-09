@@ -18,7 +18,7 @@ BLACK = (0, 0, 0)
 WHITE = 0xFFFFFF
 GREY = 0x7D7D7D
 GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
-ACCELERATION = np.array([0, 200])
+ACCELERATION = np.array([0, 400])
 
 WIDTH = 800
 HEIGHT = 600
@@ -51,6 +51,18 @@ class Ball:
         # FIXME
         self.vel += dt*ACCELERATION
         self.pos += dt*self.vel
+        if self.pos[0] + self.r >= WIDTH or self.pos[0] - self.r <= 0:
+            self.vel[0] = -0.5*self.vel[0]
+            if self.pos[0] + self.r >= WIDTH:
+                self.pos[0] = WIDTH - self.r - 1
+            else:
+                self.pos[0] = self.r + 1
+        if self.pos[1] - self.r <= 0 or self.pos[1] + self.r >= HEIGHT:
+            self.vel[1] = -0.5*self.vel[1]
+            if self.pos[1] + self.r >= HEIGHT:
+                self.pos[1] = HEIGHT - self.r - 1
+            else:
+                self.pos[1] = self.r + 1
 
     def draw(self):
         pygame.draw.circle(
