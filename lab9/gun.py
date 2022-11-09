@@ -116,7 +116,7 @@ class Gun:
         Начальные значения компонент скорости мяча
         vx и vy зависят от положения мыши.
         """
-        global balls, bullet
+        global balls
         new_ball = Ball(self.screen)
         new_ball.r += 5
         self.an = math.atan2((event.pos[1]-new_ball.pos[1]),
@@ -164,38 +164,46 @@ class Gun:
 
 class Target:
     def __init__(self, screen):
-        self.points = 0
         self.screen = screen
-        self.new_target()
-
-    def new_target(self):
-        """ Инициализация новой цели. """
-        self.pos = np.array([randint(600, 780), randint(300, 550)])
+        self.pos = np.array([randint(600, 750), randint(300, 550)])
         self.r = randint(2, 50)
         self.color = RED
 
-    def hit(self, points=1):
-        """Попадание шарика в цель."""
-        self.points += points
+    def hit(self, p=1):
+        """Попадание шарика в цель.
+        Args:
+        p - число добавляемых очков
+        """
+        global points
+        points += p
 
     def draw(self):
         pygame.draw.circle(self.screen, self.color, self.pos, self.r)
 
+def show_points(screen, targets):
+    """Отобрадает число очков на экране
+    Args:
+    screen - экран, на котором отображается число очков
+    targets - список целей
+    """
+    pass
+
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-bullet = 0
 balls = []
+points = 0
+targets = [Target(screen)]
 
 clock = pygame.time.Clock()
 gun = Gun(screen)
-target = Target(screen)
 finished = False
 
 while not finished:
     screen.fill(WHITE)
     gun.draw()
-    target.draw()
+    for t in targets:
+        t.draw()
     for b in balls:
         if b.live_time < 0:
             balls.remove(b)
@@ -216,9 +224,12 @@ while not finished:
 
     for b in balls:
         b.move(dt)
-        if b.hittest(target):
-            target.hit()
-            target.new_target()
+        for t in targets:
+            if b.hittest(t):
+                t.hit()
+                targets.remove(t)
+                targets.append(Target(screen))
+                break
     gun.power_up()
 
 pygame.quit()
