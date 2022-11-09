@@ -196,7 +196,7 @@ pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 balls = []
 points = 0
-targets = [Target(screen)]
+targets = [Target(screen), Target(screen)]
 
 clock = pygame.time.Clock()
 gun = Gun(screen)
@@ -206,6 +206,8 @@ while not finished:
     screen.fill(WHITE)
     gun.draw()
     show_points(screen, points)
+    if not len(targets):
+        targets = [Target(screen), Target(screen)]
     for t in targets:
         t.draw()
     for b in balls:
@@ -232,7 +234,6 @@ while not finished:
             if b.hittest(t):
                 t.hit()
                 targets.remove(t)
-                targets.append(Target(screen))
                 break
     gun.power_up()
 
