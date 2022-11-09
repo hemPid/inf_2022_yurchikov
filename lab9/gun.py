@@ -18,7 +18,7 @@ BLACK = (0, 0, 0)
 WHITE = 0xFFFFFF
 GREY = 0x7D7D7D
 GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
-ACCELERATION = np.array([0,200])
+ACCELERATION = np.array([0, 200])
 
 WIDTH = 800
 HEIGHT = 600
@@ -42,8 +42,10 @@ class Ball:
     def move(self, dt):
         """Переместить мяч по прошествии единицы времени.
 
-        Метод описывает перемещение мяча за один кадр перерисовки. То есть, обновляет значения
-        self.x и self.y с учетом скоростей self.vx и self.vy, силы гравитации, действующей на мяч,
+        Метод описывает перемещение мяча за один кадр перерисовки.
+        То есть, обновляет значения self.x и self.y
+        с учетом скоростей self.vx и self.vy,
+        силы гравитации, действующей на мяч,
         и стен по краям окна (размер окна 800х600).
         """
         # FIXME
@@ -59,12 +61,14 @@ class Ball:
         )
 
     def hittest(self, obj):
-        """Функция проверяет сталкивалкивается ли данный обьект с целью, описываемой в обьекте obj.
+        """Функция проверяет сталкивалкивается ли данный обьект с целью,
+        описываемой в обьекте obj.
 
         Args:
             obj: Обьект, с которым проверяется столкновение.
         Returns:
-            Возвращает True в случае столкновения мяча и цели. В противном случае возвращает False.
+            Возвращает True в случае столкновения мяча и цели.
+            В противном случае возвращает False.
         """
         s = self.pos - obj.pos
         return np.linalg.norm(s) <= self.r + obj.r
@@ -85,7 +89,7 @@ class Gun:
         self.f2_on = 0
         self.an = 1
         self.color = GREY
-        self.axis = np.array([x,y])
+        self.axis = np.array([x, y])
         self.width = width
         self.height = height
 
@@ -96,13 +100,16 @@ class Gun:
         """Выстрел мячом.
 
         Происходит при отпускании кнопки мыши.
-        Начальные значения компонент скорости мяча vx и vy зависят от положения мыши.
+        Начальные значения компонент скорости мяча
+        vx и vy зависят от положения мыши.
         """
         global balls, bullet
         new_ball = Ball(self.screen)
         new_ball.r += 5
-        self.an = math.atan2((event.pos[1]-new_ball.pos[1]), (event.pos[0]-new_ball.pos[0]))
-        new_ball.vel = 10 * np.array([self.f2_power * math.cos(self.an), self.f2_power * math.sin(self.an)])
+        self.an = math.atan2((event.pos[1]-new_ball.pos[1]),
+                             (event.pos[0]-new_ball.pos[0]))
+        new_ball.vel = 10 * np.array([self.f2_power * math.cos(self.an),
+                                      self.f2_power * math.sin(self.an)])
         balls.append(new_ball)
         self.f2_on = 0
         self.f2_power = 10
@@ -117,11 +124,19 @@ class Gun:
             self.color = GREY
 
     def draw(self):
-        a1 = np.array([(self.height/2)*math.cos(self.an - (math.pi/2)), (self.height/2)*math.sin(self.an - (math.pi/2))])
-        a4 = np.array([(self.height/2)*math.cos(self.an + (math.pi/2)), (self.height/2)*math.sin(self.an + (math.pi/2))])
-        a2 = a1 + np.array([(self.width/2)*math.cos(self.an), (self.width/2)*math.sin(self.an)])
-        a3 = a4 + np.array([(self.width/2)*math.cos(self.an), (self.width/2)*math.sin(self.an)])
-        pygame.draw.polygon(self.screen, self.color, [self.axis + a1, self.axis + a2, self.axis + a3, self.axis + a4])
+        a1 = np.array([(self.height/2)*math.cos(self.an - (math.pi/2)),
+                       (self.height/2)*math.sin(self.an - (math.pi/2))])
+        a4 = np.array([(self.height/2)*math.cos(self.an + (math.pi/2)),
+                       (self.height/2)*math.sin(self.an + (math.pi/2))])
+        a2 = a1 + np.array([(self.width/2)*math.cos(self.an),
+                            (self.width/2)*math.sin(self.an)])
+        a3 = a4 + np.array([(self.width/2)*math.cos(self.an),
+                            (self.width/2)*math.sin(self.an)])
+        pygame.draw.polygon(self.screen, self.color,
+                            [self.axis + a1,
+                             self.axis + a2,
+                             self.axis + a3,
+                             self.axis + a4])
 
     def power_up(self):
         if self.f2_on:
@@ -139,7 +154,6 @@ class Target:
         self.points = 0
         self.screen = screen
         self.new_target()
-    
 
     def new_target(self):
         """ Инициализация новой цели. """
